@@ -33,7 +33,7 @@
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
       <WarningLevel>Level3</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
@@ -43,8 +43,10 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)third_party\imgui;$(ProjectDir)third_party\imgui\backends;$(ProjectDir)third_party\minhook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;UNICODE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)src\uis\compat;$(ProjectDir)src;$(ProjectDir)src\uis\vendor\fatal;$(ProjectDir)third_party\imgui;$(ProjectDir)third_party\imgui\backends;$(ProjectDir)third_party\minhook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;UNICODE;_UNICODE;IMGUI_DEFINE_MATH_OPERATORS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/Zc:char8_t- %(AdditionalOptions)</AdditionalOptions>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -59,6 +61,20 @@
     <ClCompile Include="src\hooks.cpp" />
     <ClCompile Include="src\menu.cpp" />
     <ClCompile Include="src\themes.cpp" />
+    <ClCompile Include="src\uis\ui_assets.cpp" />
+    <ClCompile Include="src\uis\ui_manager.cpp" />
+    <ClCompile Include="src\uis\ui_nlcs2.cpp" />
+    <ClCompile Include="src\uis\ui_nllegacy.cpp" />
+    <ClCompile Include="src\uis\ui_onetap.cpp" />
+    <ClCompile Include="src\uis\ui_fatal.cpp" />
+    <ClCompile Include="src\uis\vendor\nl_cs2\gui.cpp" />
+    <ClCompile Include="src\uis\vendor\nl_legacy\neverlose_menu.cpp" />
+    <ClCompile Include="src\uis\vendor\nl_legacy\blur.cpp" />
+    <ClCompile Include="src\uis\vendor\onetap\ui\api\draw.cpp" />
+    <ClCompile Include="src\uis\vendor\onetap\ui\drawing\frames\gui_layers.cpp" />
+    <ClCompile Include="src\uis\vendor\onetap\ui\drawing\frames\group_layers.cpp" />
+    <ClCompile Include="src\uis\vendor\fatal\FatalWidgets.cpp" />
+    <ClCompile Include="src\uis\vendor\fatal\menu\Menu.cpp" />
     <ClCompile Include="third_party\imgui\imgui.cpp" />
     <ClCompile Include="third_party\imgui\imgui_draw.cpp" />
     <ClCompile Include="third_party\imgui\imgui_tables.cpp" />
@@ -78,7 +94,40 @@
     <ClInclude Include="src\hooks.hpp" />
     <ClInclude Include="src\menu.hpp" />
     <ClInclude Include="src\themes.hpp" />
+    <ClInclude Include="src\uis\ui_assets.hpp" />
+    <ClInclude Include="src\uis\ui_manager.hpp" />
+    <ClInclude Include="src\uis\ui_packs.hpp" />
+    <ClInclude Include="src\uis\compat\imgui.h" />
+    <ClInclude Include="src\uis\vendor\nl_cs2\gui.hpp" />
+    <ClInclude Include="src\uis\vendor\nl_cs2\color_t.hpp" />
+    <ClInclude Include="src\uis\vendor\nl_cs2\hashes.hpp" />
+    <ClInclude Include="src\uis\vendor\nl_cs2\bytes.hpp" />
+    <ClInclude Include="src\uis\vendor\nl_legacy\neverlose_menu.hpp" />
+    <ClInclude Include="src\uis\vendor\nl_legacy\neverlose_menu_internal.hpp" />
+    <ClInclude Include="src\uis\vendor\nl_legacy\blur.hpp" />
+    <ClInclude Include="src\uis\vendor\nl_legacy\blur_x.hpp" />
+    <ClInclude Include="src\uis\vendor\nl_legacy\blur_y.hpp" />
+    <ClInclude Include="src\uis\vendor\nl_legacy\hashes.hpp" />
+    <ClInclude Include="src\uis\vendor\nl_legacy\bytes.hpp" />
+    <ClInclude Include="src\uis\vendor\onetap\ui\api\draw.hpp" />
+    <ClInclude Include="src\uis\vendor\onetap\ui\state\ui_state.hpp" />
+    <ClInclude Include="src\uis\vendor\onetap\ui\core\inspector.h" />
+    <ClInclude Include="src\uis\vendor\onetap\ui\core\ui_theme.h" />
+    <ClInclude Include="src\uis\vendor\onetap\ui\drawing\frames\group_layers.hpp" />
+    <ClInclude Include="src\uis\vendor\onetap\ui\drawing\frames\gui_layers.hpp" />
+    <ClInclude Include="src\uis\vendor\fatal\FatalWidgets.h" />
+    <ClInclude Include="src\uis\vendor\fatal\menu\Menu.h" />
+    <ClInclude Include="src\uis\vendor\fatal\menu\Client.h" />
+    <ClInclude Include="src\uis\vendor\fatal\menu\property\Properties.h" />
   </ItemGroup>
+
+  <!-- The Fatal pack's font blobs load from disk next to the DLL. -->
+  <Target Name="CopyRuntimeAssets" AfterTargets="Build">
+    <ItemGroup>
+      <FatalAssets Include="$(ProjectDir)assets\fatal\*.base85" />
+    </ItemGroup>
+    <Copy SourceFiles="@(FatalAssets)" DestinationFolder="$(OutDir)assets\fatal" SkipUnchangedFiles="true" />
+  </Target>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

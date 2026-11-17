@@ -1,6 +1,7 @@
 #include "hooks.hpp"
 #include "features.hpp"
 #include "menu.hpp"
+#include "uis/ui_manager.hpp"
 
 #include <d3d11.h>
 #include <dxgi1_2.h>
@@ -65,11 +66,15 @@ void EnsureTarget() {
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (msg == WM_KEYDOWN && wParam == VK_INSERT && !(lParam & 0x40000000)) {
-        g_menuOpen = !g_menuOpen;
+        ui::Toggle();
+        return 0;
+    }
+    if (msg == WM_KEYDOWN && wParam == VK_HOME && !(lParam & 0x40000000)) {
+        ui::OpenSelector();
         return 0;
     }
 
-    if (g_menuOpen) {
+    if (ui::WantsInput()) {
         ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
         switch (msg) {
         case WM_MOUSEMOVE:
@@ -108,6 +113,7 @@ bool InitBackend(IDXGISwapChain* sc) {
 
     ImGui::CreateContext();
     menu::Init();
+    ui::Init(g_device, g_ctx);
 
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
@@ -136,10 +142,7 @@ void RenderFrame(IDXGISwapChain* sc) {
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    if (g_menuOpen) {
-        ClipCursor(nullptr);
-        menu::Draw();
-    }
+    ui::Draw();
 
     ImGui::Render();
     g_ctx->OMSetRenderTargets(1, &g_rtv, nullptr);

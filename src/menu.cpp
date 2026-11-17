@@ -1,6 +1,7 @@
 #include "menu.hpp"
 #include "features.hpp"
 #include "themes.hpp"
+#include "uis/ui_manager.hpp"
 
 #include <imgui.h>
 #include <unordered_map>
@@ -103,7 +104,7 @@ void SectionLabel(const char* t) {
 }
 
 void Tabs() {
-    const char* names[4] = {"PLAYER", "PROGRESSION", "WORLD", "THEME"};
+    const char* names[4] = {"PLAYER", "PROGRESSION", "WORLD", "UI"};
     const float w        = ImGui::GetContentRegionAvail().x / 4.f;
     ImDrawList* dl       = ImGui::GetWindowDrawList();
 
@@ -321,11 +322,41 @@ void WorldTab() {
 }
 
 void ThemeTab() {
-    SectionLabel("interface");
+    // Renderer picker. Each entry is a full UI from the vendored imGUIS packs;
+    // selecting one swaps the font atlas and style and hands rendering over.
+    SectionLabel("renderer");
+    for (int i = 0; i < static_cast<int>(ui::Kind::Count); ++i) {
+        const ui::Kind k = static_cast<ui::Kind>(i);
+
+        ImGui::PushID(i);
+        const ImVec2 pos = ImGui::GetCursorScreenPos();
+        const float  w   = ImGui::GetContentRegionAvail().x;
+        const float  h   = 46.f;
+
+        ImGui::InvisibleButton("##renderer", ImVec2(w, h));
+        const bool hovered = ImGui::IsItemHovered();
+        if (ImGui::IsItemClicked())
+            ui::Select(k);
+
+        const bool  on = (ui::Current() == k);
+        ImDrawList* dl = ImGui::GetWindowDrawList();
+        dl->AddRectFilled(pos, ImVec2(pos.x + w, pos.y + h),
+                          on ? c::panel2 : c::panel, 6.f);
+        dl->AddRect(pos, ImVec2(pos.x + w, pos.y + h),
+                    on ? c::accent : (hovered ? c::track : c::stroke), 6.f, 0, on ? 1.5f : 1.f);
+
+        dl->AddText(ImVec2(pos.x + 12.f, pos.y + 6.f),  on ? c::text : c::dim, ui::Name(k));
+        dl->AddText(ImVec2(pos.x + 12.f, pos.y + 24.f), c::muted, ui::Source(k));
+        if (on)
+            dl->AddText(ImVec2(pos.x + w - 70.f, pos.y + 14.f), c::accent, "ACTIVE");
+        ImGui::PopID();
+    }
+
+    SectionLabel("default palette");
     for (int i = 0; i < theme::Count; ++i) {
         const theme::Palette& p = theme::kPalettes[i];
 
-        ImGui::PushID(i);
+        ImGui::PushID(1000 + i);
         const ImVec2 pos = ImGui::GetCursorScreenPos();
         const float  w   = ImGui::GetContentRegionAvail().x;
         const float  h   = 48.f;
@@ -362,9 +393,9 @@ void ThemeTab() {
 
     SectionLabel("info");
     ImGui::TextColored(ImVec4(0.49f, 0.50f, 0.57f, 1.f),
-                       "Palette sources audited from the imGUIS packs.");
+                       "Renderer switch rebuilds the font atlas instantly.");
     ImGui::TextColored(ImVec4(0.49f, 0.50f, 0.57f, 1.f),
-                       "Applying rebuilds the ImGui style instantly.");
+                       "HOME also opens the renderer selector.");
 }
 
 } // namespace
@@ -373,13 +404,20 @@ void Init() {
     theme::Apply(0);
 
     ImGuiIO& io = ImGui::GetIO();
+    io.IniFilename = nullptr;
+    io.LogFilename = nullptr;
+}
+
+void BuildFonts() {
+    ImGuiIO& io = ImGui::GetIO();
     g_body  = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 15.0f);
     g_title = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeuib.ttf", 19.0f);
     if (!g_body)  g_body  = io.Fonts->AddFontDefault();
     if (!g_title) g_title = g_body;
+}
 
-    io.IniFilename = nullptr;
-    io.LogFilename = nullptr;
+ImFont* TitleFont() {
+    return g_title;
 }
 
 void Draw() {
